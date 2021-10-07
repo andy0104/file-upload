@@ -1,20 +1,5 @@
 import { ShareServiceClient, StorageSharedKeyCredential } from '@azure/storage-file-share';
 
-// async function main() {
-//   let shareIter = serviceClient.listShares();
-//   let i = 1;
-//   for await (const share of shareIter) {
-//     console.log(`Share${i}: ${share.name}`);
-//     i++;
-//   }
-// }
-// async function main() {
-//   const dirName = 'test-company';
-//   const azureFileShare = new AzureFileShare();
-//   await azureFileShare.createDirctory(dirName);
-//   await azureFileShare.listAllDirsAndFiles(dirName);
-// }
-
 class AzureFileShare {
   private accountName: string;
   private accountKey: string;
