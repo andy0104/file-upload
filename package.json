@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "dependencies": {
+    "@azure/storage-file-share": "^12.8.0",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
     "nodemon": "^2.0.13"
