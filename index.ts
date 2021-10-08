@@ -1,6 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import fileUpload from 'express-fileupload';
-
+import fs from 'fs';
+import AzureFileShare from "./azure-file-share";
+//
 const app = express();
 
 app.use(express.json());
@@ -32,12 +34,48 @@ app.post('/upload', async (req: Request, res: Response, next: NextFunction) => {
     if (sampleFile.size > max_size) {
       return res.status(422).json({ msg: 'The file size should be not more than 25MB' });
     }
-    const result = await sampleFile.mv(uploadPath);
-    console.log(result);
-    return res.json(result);
+    // const result = await sampleFile.mv(uploadPath);
+    // console.log(result);
+    const azureFileShare = new AzureFileShare(true);
+    const companyDirExist = await azureFileShare.checkDirectotyExist('test-amazon');
+
+    if (!companyDirExist) {
+      console.log(`Company directory does not exist`);
+      const companyDirCreated = await azureFileShare.createDirctory('test-amazon');
+      if (!companyDirCreated) {
+        console.log(`Company directory could not be created`);
+        throw new Error('Company directory could not be created');
+      }
+    }
+
+    // Upload the file in Azure File Share
+    // const fileUploaded = await azureFileShare.uploadFile(sampleFile, 'test-amazon');
+    // if (!fileUploaded) {
+    //   console.log(`File could not be uploaded`);
+    //   throw new Error('File could not be uploaded');
+    // }
+    await azureFileShare.listAllDirsAndFiles('test-amazon1');
+
+    const fileExist = await azureFileShare.checkFileExist('test-amazon', 'certificate-ak.pdf');
+    const fileDownload = await azureFileShare.downloadFile('test-amazon', 'certificate-ak.pdf', uploadPath);
+    // return res.json({ error: null, msg: 'file uploaded' });
+    const uploadedFileName = ``
+    // res.set("Content-Disposition", `attachment;filename=${uploadPath}`);
+    res.download(uploadPath, (error) => {
+      if (error) {
+        throw error;
+      }
+      fs.unlink(uploadPath, (err) => {
+        if (err) {
+          console.log(`Error deleting the local file after download`);
+          console.error(err);
+        }
+        console.log(`File removed ${uploadPath}`);
+      });
+    });
   } catch (e) {
     console.log(e);
-    return res.json(e);
+    return res.json({ error: e, msg: '' });
   }
 });
 
