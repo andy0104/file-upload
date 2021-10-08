@@ -42,14 +42,11 @@ class AzureFileShare {
   }
 
   public async listAllDirsAndFiles(companyDirName: string) {
-    this.serviceClient = this.__createServiceClient();
-    const directoryClient = await this.__createShareClient(this.serviceClient);
-    const subDir = await directoryClient.getDirectoryClient(companyDirName);
-    const exist = await subDir.exists();
-    console.log(exist);
+    try {
+      this.serviceClient = this.__createServiceClient();
+      const directoryClient = await this.__createShareClient(this.serviceClient);
+      const subDir = await directoryClient.getDirectoryClient(companyDirName);
 
-    if (exist) {
-      console.log('folder exist');
       let dirIter = subDir.listFilesAndDirectories();
       let i = 1;
       for await (const item of dirIter) {
@@ -61,9 +58,10 @@ class AzureFileShare {
         }
         i++;
       }
-    } else {
-      console.log('folder does not exist...Create the folder first');
-      // await subDir.create();
+    } catch (e) {
+      console.error(`Error checking company directory listing...`);
+      console.log(e);
+      throw e;
     }
   }
 
