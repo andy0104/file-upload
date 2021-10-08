@@ -10,8 +10,8 @@ class AzureFileShare {
   private dirB2cName: string;
 
   constructor(isBusiness: boolean = true) {
-    this.accountName = 'anindafileshare';
-    this.accountKey = 'NbJKzLhh0aK45nEdKzvDILkdUQMMEKRxNfzvdI2FIQHqTWbQjD3lwi/mUjKsGewkn4wAhZ45BO4DJtXBLMJ0kg==';
+    this.accountName = '';
+    this.accountKey = '';
     this.shareName = 'tapup';
     this.dirB2bName = 'B2B';
     this.dirB2cName = 'B2C';
