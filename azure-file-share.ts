@@ -10,8 +10,8 @@ class AzureFileShare {
   private dirB2cName: string;
 
   constructor(isBusiness: boolean = true) {
-    this.accountName = '';
-    this.accountKey = '';
+    this.accountName = 'anindafileshare';
+    this.accountKey = 'NbJKzLhh0aK45nEdKzvDILkdUQMMEKRxNfzvdI2FIQHqTWbQjD3lwi/mUjKsGewkn4wAhZ45BO4DJtXBLMJ0kg==';
     this.shareName = 'tapup';
     this.dirB2bName = 'B2B';
     this.dirB2cName = 'B2C';
@@ -19,18 +19,26 @@ class AzureFileShare {
   }
 
   private __createServiceClient() {
-    const credential = new StorageSharedKeyCredential(this.accountName, this.accountKey);
-    return new ShareServiceClient(
-      // When using AnonymousCredential, following url should include a valid SAS
-      `https://${this.accountName}.file.core.windows.net`,
-      credential
-    );
+    try {
+      const credential = new StorageSharedKeyCredential(this.accountName, this.accountKey);
+      return new ShareServiceClient(
+        // When using AnonymousCredential, following url should include a valid SAS
+        `https://${this.accountName}.file.core.windows.net`,
+        credential
+      );
+    } catch (e) {
+      throw e;
+    }
   }
 
   private async __createShareClient(serviceClient: ShareServiceClient) {
-    return serviceClient
-      .getShareClient(this.shareName)
-      .getDirectoryClient(this.dirName);
+    try {
+      return serviceClient
+        .getShareClient(this.shareName)
+        .getDirectoryClient(this.dirName);
+    } catch (e) {
+      throw e;
+    }
   }
 
   public async listAllDirsAndFiles(companyDirName: string) {
@@ -68,8 +76,9 @@ class AzureFileShare {
       console.log(exist);
       return exist;
     } catch (e) {
-      console.error(`error creating company directory....`);
+      console.error(`Error checking company directory exist....`);
       console.log(e);
+      throw e;
     }
   }
 
@@ -78,20 +87,14 @@ class AzureFileShare {
       this.serviceClient = this.__createServiceClient();
       const directoryClient = await this.__createShareClient(this.serviceClient);
       const subDir = await directoryClient.getDirectoryClient(companyDirName);
-      const exist = await subDir.exists();
-      console.log(exist);
-
-      if (!exist) {
-        const createDir = await subDir.create();
-        console.log('Directory created');
-        console.log(createDir);
-      } else {
-        console.log('Directory already exist');
-        console.log(subDir);
-      }
+      const createDir = await subDir.create();
+      console.log('Directory created');
+      console.log(createDir);
+      return true;
     } catch (e) {
-      console.error(`error creating company directory....`);
+      console.error(`Error creating company directory....`);
       console.log(e);
+      throw e;
     }
   }
 
@@ -100,27 +103,51 @@ class AzureFileShare {
       this.serviceClient = this.__createServiceClient();
       const directoryClient = await this.__createShareClient(this.serviceClient);
       const subDir = await directoryClient.getDirectoryClient(companyDirName);
-      const exist = await subDir.exists();
-      console.log(exist);
+      const fileClient = subDir.getFileClient(fileObject.name);
+      const fileCreate = await fileClient.create(fileObject.size);
+      console.log(`File created ${fileObject.name} successfully`);
+      console.log(fileCreate);
 
-      if (exist) {
-        const fileClient = subDir.getFileClient(fileObject.name);
-        const fileCreate = await fileClient.create(fileObject.size);
-        console.log(`File created ${fileObject.name} successfully`);
-        console.log(fileCreate);
+      // Upload the file range
+      // const fileUpload = await fileClient.uploadRange(fileObject.data, 0, fileObject.size);
+      const fileUpload = await fileClient.uploadData(fileObject.data);
+      console.log(`Uploaded file range...`);
+      console.log(fileUpload);
 
-        // Upload the file range
-        const fileUpload = await fileClient.uploadRange(fileObject.data, 0, fileObject.size);
-        console.log(`Uploaded file range...`);
-        console.log(fileUpload);
-
-      } else {
-        console.log('Directory does not exist');
-        console.log(subDir);
-      }
+      return true;
     } catch (e) {
-      console.error(`error company directory does not exist....Create directory first`);
+      console.error(`Error uploading file...`);
       console.log(e);
+      throw e;
+    }
+  }
+
+  public async checkFileExist(companyDirName: string, fileName: string) {
+    try {
+      this.serviceClient = this.__createServiceClient();
+      const directoryClient = await this.__createShareClient(this.serviceClient);
+      const fileExist = await directoryClient.getDirectoryClient(companyDirName).getFileClient(fileName).exists();
+      console.log(`File exist: ${fileExist}`);
+      return fileExist;
+    } catch (e) {
+      console.error(`Error downloading file...`);
+      console.log(e);
+      throw e;
+    }
+  }
+
+  public async downloadFile(companyDirName: string, fileName: string, uploadPath: string) {
+    try {
+      this.serviceClient = this.__createServiceClient();
+      const directoryClient = await this.__createShareClient(this.serviceClient);
+      const subDir = await directoryClient.getDirectoryClient(companyDirName).getFileClient(fileName);
+      const downloadResponse = await subDir.downloadToFile(uploadPath);
+      console.log(`Downloading file...`);
+      console.log(downloadResponse);
+    } catch (e) {
+      console.error(`Error downloading file...`);
+      console.log(e);
+      throw e;
     }
   }
 }
